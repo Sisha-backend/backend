@@ -4,6 +4,48 @@ const v4 = require('node-uuid').v4;
 const jwt = require('jsonwebtoken');
 var User = require('../models/user');
 
+router.post('/registry', (req, res, next) => {
+
+  req.check('email', 'Please enter a valid email').len(1).isEmail();
+  req.check('password', 'Please enter a password with a length between 6 and 20 digits').len(6, 20);
+
+  const errors = req.validationErrors();
+
+  if (errors) {
+    return res.status(400).json({ errors })
+  } else {
+      // User.password(req.body.password, (err, password) => {
+      //  if (err) {
+      //    return res.status(400).json({ error: err.message })
+      // }
+
+      const user = new User({
+        name: req.body.name,
+        email: req.body.email,
+        password: req.body.password,
+      });
+
+     // user.passwordHash = passwordHash;
+      user.save((err, item) => {
+        if (err) {
+          return res.status(400).json({ error: err.message })
+        }
+        const payload = {
+          //_id: item._id,
+          iss: 'http://localhost:3000',
+        };
+        const options = {
+          expiresIn: '7d',
+          jwtid: v4(),
+        };
+        const secret = "SecretStringForDummies";
+        jwt.sign(payload, secret, options, (err, token) => {
+          return res.json({ data: token })
+        })
+      })
+  }
+});
+
 /* GET users listing. */
 router.post('/login', function(req, res, next) {
   req.check('email', 'Please enter a valid email').len(1).isEmail();
