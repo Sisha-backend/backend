@@ -12,38 +12,50 @@ router.post('/registry', (req, res, next) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    return res.status(400).json({ errors })
+    return res.status(400).json({errors})
   } else {
-      // User.password(req.body.password, (err, password) => {
-      //  if (err) {
-      //    return res.status(400).json({ error: err.message })
-      // }
+    // User.password(req.body.password, (err, password) => {
+    //  if (err) {
+    //    return res.status(400).json({ error: err.message })
+    // }
 
-      const user = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
+    const users = new User({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+    });
+
+    User.findOne({name: req.body.name}, (err, user) => {
+      if (user) {
+        return res.status(400).json({error: 'This name already exist. Please, change it'})
+      }
+      User.findOne({email: req.body.email}, (err, user) => {
+        if (user) {
+          return res.status(400).json({error: 'This email already exist. Please, change it'})
+        }
+        users.save((err, item) => {
+          if (err) {
+            return res.status(400).json({error: err.message})
+          }
+          const payload = {
+            //_id: item._id,
+            iss: 'http://localhost:3000',
+          };
+          const options = {
+            expiresIn: '7d',
+            jwtid: v4(),
+          };
+          const secret = "SecretStringForDummies";
+          jwt.sign(payload, secret, options, (err, token) => {
+            return res.json({data: token})
+          })
+        })
       });
 
-     // user.passwordHash = passwordHash;
-      user.save((err, item) => {
-        if (err) {
-          return res.status(400).json({ error: err.message })
-        }
-        const payload = {
-          //_id: item._id,
-          iss: 'http://localhost:3000',
-        };
-        const options = {
-          expiresIn: '7d',
-          jwtid: v4(),
-        };
-        const secret = "SecretStringForDummies";
-        jwt.sign(payload, secret, options, (err, token) => {
-          return res.json({ data: token })
-        })
-      })
-  }
+    });
+
+    //users.passwordHash = passwordHash;
+    }
 });
 
 /* GET users listing. */
