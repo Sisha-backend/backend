@@ -99,8 +99,17 @@ router.post('/questions', (req, res, next) => {
   if (errors) {
     return res.status(400).json({errors})
   } else {
+    var arrayAnswer = req.body.answers;
+    var trueExists = false;
+    arrayAnswer.forEach(answer => {
+        if (answer.IsRight === true) {
+          trueExists = true;
+        }
+    });
+    if (!trueExists){
+      return res.status(400).json({error: 'You need at least one right answer'});
+    }
     const questionObj = new Question({
-      quizId: req.body.quizId,
       text: req.body.text,
       answers: req.body.answers,
     });
