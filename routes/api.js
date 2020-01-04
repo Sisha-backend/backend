@@ -20,29 +20,56 @@ router.post('/registry', (req, res, next) => {
       if (err) {
         return res.status(400).json({error: err.message})
       }
-
-      const userObj = new User({
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password,
-      });
-      userObj.passwordHash = passwordHash;
-      User.findOne({name: req.body.name}, (err, user) => {
-        if (user) {
-          return res.status(400).json({error: 'This name already exist. Please, change it'})
-        }
-        User.findOne({email: req.body.email}, (err, user) => {
-          if (user) {
-            return res.status(400).json({error: 'This email already exist. Please, change it'})
-          }
-          userObj.save((err, item) => {
-            if (err) {
-              return res.status(400).json({error: err.message})
-            }
-            res.status(200).send();
-          })
+      if (req.body.status===1) {
+        const userObj = new User({
+          name: req.body.name,
+          status: 1,
+          group: req.body.group,
+          email: req.body.email,
+          password: req.body.password,
         });
-      });
+        userObj.passwordHash = passwordHash;
+        User.findOne({name: req.body.name}, (err, user) => {
+          if (user) {
+            return res.status(400).json({error: 'This name already exist. Please, change it'})
+          }
+          User.findOne({email: req.body.email}, (err, user) => {
+            if (user) {
+              return res.status(400).json({error: 'This email already exist. Please, change it'})
+            }
+            userObj.save((err, item) => {
+              if (err) {
+                return res.status(400).json({error: err.message})
+              }
+              res.status(200).send();
+            })
+          });
+        });
+      } else{
+        const adminObj = new Admin({
+          name: req.body.name,
+          status: 0,
+          email: req.body.email,
+          password: req.body.password,
+        });
+        adminObj.passwordHash = passwordHash;
+        Admin.findOne({name: req.body.name}, (err, admin) => {
+          if (admin) {
+            return res.status(400).json({error: 'This name already exist. Please, change it'})
+          }
+          Admin.findOne({email: req.body.email}, (err, admin) => {
+            if (admin) {
+              return res.status(400).json({error: 'This email already exist. Please, change it'})
+            }
+            adminObj.save((err, item) => {
+              if (err) {
+                return res.status(400).json({error: err.message})
+              }
+              res.status(200).send();
+            })
+          });
+        });
+      }
     });
     }
 });
@@ -86,7 +113,7 @@ router.post('/login', function(req, res, next) {
         };
         const secret = "SecretStringForDummies";
         jwt.sign(payload, secret, options, (err, token) => {
-          return res.json({data: token})
+          return res.status(200).json({data: token})
         });
       });
     });
@@ -121,7 +148,6 @@ router.post('/questions', (req, res, next) => {
       res.status(200).send();
     })
   }
-
 });
 
 router.get('/questions', (req, res, next) => {
@@ -149,6 +175,76 @@ router.get('/questions/:id', (req, res, next) => {
       return res.status(400).json({ error: 'Question not found' })
     }
     res.status(200).json(question);
+  });
+});
+
+router.get('/quizzes', (req, res, next) => {
+  var quizzesList = {};
+
+  Quizzes.find({}, function (err, quizzes) {
+    if (err) {
+      return res.status(400).send(err.message);
+    }
+    quizzes.forEach(function(quizze) {
+      quizzesList[question._id] = quizze;
+    });
+    res.status(200).send(quizzesList);
+  });
+});
+
+router.get('/quiz/:id', (req, res, next) => {
+  req.params.id = parseInt(req.params.id);
+  if (isNaN(req.params.id)) {
+    res.status(404).send();
+    return;
+  }
+  Quiz.findOne({quizId: req.params.id}, (err, quiz) => {
+    if (!quiz) {
+      return res.status(400).json({ error: 'Quiz not found' })
+    }
+    res.status(200).json(quiz);
+  });
+});
+
+router.get('/languages', (req, res, next) => {
+  var languagesList = {};
+
+  Languages.find({}, function (err, languages) {
+    if (err) {
+      return res.status(400).send(err.message);
+    }
+    languages.forEach(function(language) {
+      languagesList[question._id] = language;
+    });
+    res.status(200).send(languagesList);
+  });
+});
+
+router.post('/tests', (req, res, next) => {
+  Test.findOne({name: req.body.name}, (err, test) => {
+    if (test) {
+      return res.status(400).json({error: 'This name already exist. Please, change it'})
+    }
+    const testObj = new Test({
+      name: req.body.name,
+    });
+    testObj.save((err, item) => {
+      if (err) {
+        return res.status(400).json({error: err.message})
+      }
+      res.status(200).send();
+    })
+  });
+});
+
+router.get('/user_static/:id', (req, res, next) => {
+  req.params.id = parseInt(req.params.id);
+  if (isNaN(req.params.id)) {
+    res.status(404).send();
+    return;
+  }
+  User_static.findOne({user_staticId: req.params.id}, (err, user_static) => {
+    res.status(200).json(user_static);
   });
 });
 
